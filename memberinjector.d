@@ -35,28 +35,6 @@ mixin template createTrigger (Type, string name) {
 /* 'private:' Can't mark the functions below as private because then they can't
    be mixed in. */
 
-unittest {
-    int value = 0;
-    struct Example {
-        mixin createTrigger !(int, `foo`, (n=>n*2));
-        this (bool) {
-            // Callback from the same struct.
-            fooTrigger ~= &internalTrigger;
-        }
-        void internalTrigger (int num) {value += num;}
-    }
-    Example ex = Example (true);
-    void externalTrigger (int num) {value += num * 2;}
-    assert (ex.foo == 0 && value == 0);
-    ex.foo = 1;
-    import std.conv : text;
-    // Modified setter sets to the number * 2;
-    assert (ex.foo == 2 && value == 2, text (ex.foo, ` `, value));
-    ex.fooTriggers ~= &externalTrigger;
-    ex.foo = 1;
-    // Both triggers are triggers, one sums 2 and the other 4.
-    assert (ex.foo == 2 && value == 8, text (ex.foo, ` `, value));
-}
 
 struct VariableWithTrigger (Type) {
 
