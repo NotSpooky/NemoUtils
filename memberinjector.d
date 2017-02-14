@@ -41,9 +41,9 @@ struct VariableWithTrigger (Type) {
     Type value;
     alias value this;
     /// Array of triggers that are called whenever `variable = rhs` is used.
-    void delegate (Type) [] assignTriggers;
+    void delegate (Type) [] onAssign;
     /// Same as above but called before the assignment is done.
-    void delegate (Type) [] beforeAssignment;
+    void delegate (Type) [] beforeAssign;
     /+ Doesn't work. Assignment implemented in createTrigger.
     void opAssign (T)(T rhs) {
         this.value = rhs;
@@ -59,18 +59,18 @@ struct VariableWithTrigger (Type) {
 
         /// Array of triggers that are called whenever `variable ~= rhs`
         /// is used.
-        void delegate (BaseType) [] appendTriggers;
+        void delegate (BaseType) [] onAppend;
 
         /**********************************************************************
          * Overload of appending for normal arrays.
-         * Calls all members of appendTriggers with the appended value.
+         * Calls all members of onAppend with the appended value.
          * For example when using `value ~= rhs`.
          **********************************************************************/
         auto ref opOpAssign (string operator) (BaseType rhs) {
             mixin (`this.value ` ~ operator ~ `= rhs;`);
             static if (operator == `~`) {
                 // Calls each trigger with the appended value.
-                foreach (ref trigger; appendTriggers) {
+                foreach (ref trigger; onAppend) {
                     trigger (rhs);
                 }
             }
