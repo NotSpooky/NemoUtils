@@ -22,11 +22,11 @@ mixin template createTrigger (Type, string name) {
     }`);
     // Setter.
     mixin (`@property void ` ~ name ~ `(Type rhs) {
-        foreach (ref trigger; m_` ~ name ~ `.beforeAssignment) {
+        foreach (ref trigger; m_` ~ name ~ `.beforeAssign) {
             trigger (m_` ~ name ~`);
         }
         m_` ~ name ~ ` = rhs;
-        foreach (ref trigger; m_` ~ name ~ `.assignTriggers) {
+        foreach (ref trigger; m_` ~ name ~ `.onAssign) {
             trigger (m_` ~ name ~`);
         }
     }`);
@@ -47,7 +47,7 @@ struct VariableWithTrigger (Type) {
     /+ Doesn't work. Assignment implemented in createTrigger.
     void opAssign (T)(T rhs) {
         this.value = rhs;
-        foreach (ref trigger; assignTriggers) {
+        foreach (ref trigger; onAssign) {
             trigger (this.value);
         }
     }+/
@@ -81,28 +81,28 @@ struct VariableWithTrigger (Type) {
         /// Array of triggers that are called whenever `variable [index] = rhs`
         /// is used.
         void delegate (ValueType newVal, IndexType index, bool existedBefore) []
-        /**/ indexAssignTriggers;
+        /**/ onIndexAssign;
         /// Array of triggers that are called whenever `variable.remove [index]`
         /// is called.
-        void delegate (ValueType oldVal, IndexType index) [] removeTriggers;
+        void delegate (ValueType oldVal, IndexType index) [] onRemovedEntry;
 
         /**********************************************************************
          * Overload of indexed appending for associative arrays.
-         * Calls all members of indexAssignTriggers with the appended value.
+         * Calls all members of onIndexAssign with the appended value.
          **********************************************************************/
         auto ref opIndexAssign (ValueType newVal, IndexType index) {
             bool exists = index in value ? true : false;
             value [index] = newVal;
-            foreach (ref trigger; indexAssignTriggers) {
+            foreach (ref trigger; onIndexAssign) {
                 trigger (newVal, index, exists);
             }
         }
         /**********************************************************************
          * Overload of the remove function for associative arrays.
-         * Calls all members of removeTriggers with the removed value and index.
+         * Calls all members of onRemovedEntry with the removed value and index.
          **********************************************************************/
         auto ref remove (IndexType index) {
-            foreach (ref trigger; removeTriggers) {
+            foreach (ref trigger; onRemovedEntry) {
                 trigger (value [index], index);
             }
             value.remove (index);
