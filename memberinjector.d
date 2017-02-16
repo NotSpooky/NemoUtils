@@ -5,6 +5,7 @@ module nemoutils.memberinjector;
 /// When importing this module, selective imports shouldn't be used.
 
 
+/+
 /******************************************************************************
  * To be used in a mixin.
  * Generates a private variable, a public getter, a setter 
@@ -12,10 +13,12 @@ module nemoutils.memberinjector;
  * Params:
  *      Type = The type of the variable.
  *      name = The name of the variable, as a string.
+ * As of now it uses a mixin template because assignment overloading isn't
+ * working as expected.
  ******************************************************************************/
 mixin template createTrigger (Type, string name) {
     //TO DO: Check name is a valid variable name.
-    mixin (`VariableWithTrigger!(Type) m_` ~ name ~ `;`);
+    mixin (`Triggered!(Type) m_` ~ name ~ `;`);
     // Getter.
     mixin (`@property auto ref ` ~ name ~ `() {
         return m_` ~ name ~ `;
@@ -30,13 +33,13 @@ mixin template createTrigger (Type, string name) {
             trigger (m_` ~ name ~`);
         }
     }`);
-}
+}+/
 
 /* 'private:' Can't mark the functions below as private because then they can't
    be mixed in. */
 
 
-struct VariableWithTrigger (Type) {
+struct Triggered (Type) {
 
     Type value;
     alias value this;
@@ -44,13 +47,15 @@ struct VariableWithTrigger (Type) {
     void delegate (Type) [] onAssign;
     /// Same as above but called before the assignment is done.
     void delegate (Type) [] beforeAssign;
-    /+ Doesn't work. Assignment implemented in createTrigger.
     void opAssign (T)(T rhs) {
+        foreach (ref trigger; beforeAssign) {
+            trigger (this.value);
+        }
         this.value = rhs;
         foreach (ref trigger; onAssign) {
             trigger (this.value);
         }
-    }+/
+    }
 
     import std.traits : isArray, isAssociativeArray;
     static if (isArray!Type) {
@@ -108,4 +113,19 @@ struct VariableWithTrigger (Type) {
             value.remove (index);
         }
     }
+}
+
+unittest {
+    class Foo {
+        int bar;
+    }
+    import std.stdio;
+    import nemoutils.memberinjector;
+    Triggered!Foo triggered;
+    triggered = new Foo ();
+    assert (triggered.bar == 0);
+    triggered.onAssign ~= (Foo newVal) {newVal.bar ++;};
+    assert (triggered.bar == 0);
+    triggered = new Foo ();
+    assert (triggered.bar == 1);
 }
