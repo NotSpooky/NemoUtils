@@ -40,7 +40,9 @@ mixin template createTrigger (Type, string name) {
 
 
 struct Triggered (Type) {
-
+    this (Type newValue) {
+        this.value = newValue;
+    }
     Type value;
     alias value this;
     /// Array of triggers that are called whenever `variable = rhs` is used.
