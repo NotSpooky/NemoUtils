@@ -1,3 +1,5 @@
+module nemoutils.moduleimporter;
+
 // Credits to Daniel Nielsen
 template from(string moduleName)
 {
